@@ -1,7 +1,7 @@
 {
-“name”: “HeroMobile - Gestion Atelier”,
-“short_name”: “HeroMobile”,
-“description”: “Application de gestion d’atelier de réparation HeroMobile - smartphones, tablettes et consoles”,
+“name”: “RepairBox - Gestion Atelier”,
+“short_name”: “RepairBox”,
+“description”: “Application de gestion d’atelier de réparation RepairBox - smartphones, tablettes et consoles”,
 “start_url”: “/”,
 “display”: “standalone”,
 “background_color”: “#ff1744”,
