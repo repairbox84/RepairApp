@@ -1,0 +1,2196 @@
+<!DOCTYPE html>
+
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HeroMobile - Gestion Atelier</title>
+
+```
+<!-- PWA Meta Tags -->
+<meta name="theme-color" content="#7c3aed">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="HeroMobile">
+
+<style>
+    :root {
+        /* Mode Sombre Uniquement */
+        --bg-primary: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+        --bg-secondary: #2d3748;
+        --bg-card: #2d3748;
+        --bg-glass: rgba(255, 255, 255, 0.1);
+        --bg-glass-dark: rgba(255, 255, 255, 0.05);
+        
+        --text-primary: #f7fafc;
+        --text-secondary: #e2e8f0;
+        --text-muted: #a0aec0;
+        --text-on-dark: #ffffff;
+        --text-on-card: #f7fafc;
+        
+        --accent-primary: #7c3aed;
+        --accent-secondary: #a855f7;
+        --accent-success: #10b981;
+        --accent-warning: #f59e0b;
+        --accent-error: #ef4444;
+        --accent-info: #06b6d4;
+        
+        --border-color: rgba(74, 85, 104, 0.6);
+        --shadow-color: rgba(0, 0, 0, 0.3);
+    }
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: var(--bg-primary);
+        min-height: 100vh;
+        color: var(--text-on-dark);
+        overflow-x: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 15px;
+    }
+
+    /* Glass morphism */
+    .glass {
+        background: var(--bg-glass);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        border: 1px solid var(--border-color);
+        box-shadow: 0 8px 32px var(--shadow-color);
+    }
+
+    .glass-darker {
+        background: var(--bg-glass-dark);
+        backdrop-filter: blur(15px);
+    }
+
+    /* Header */
+    .header {
+        padding: 20px 25px;
+        margin-bottom: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .header h1 {
+        font-size: clamp(1.8rem, 4vw, 2.5rem);
+        font-weight: 700;
+        background: linear-gradient(45deg, var(--accent-primary), var(--accent-secondary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .date-nav {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .btn {
+        background: var(--bg-glass);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 10px 16px;
+        color: var(--text-on-dark);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+
+    .btn:hover {
+        background: var(--bg-glass-dark);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px var(--shadow-color);
+    }
+
+    .btn:active {
+        transform: translateY(0);
+    }
+
+    .btn-primary {
+        background: linear-gradient(45deg, var(--accent-primary), var(--accent-secondary));
+        border: none;
+        color: white;
+        box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3);
+    }
+
+    .btn-primary:hover {
+        box-shadow: 0 6px 20px rgba(124, 58, 237, 0.4);
+        background: linear-gradient(45deg, var(--accent-secondary), var(--accent-primary));
+    }
+
+    /* Navigation tabs */
+    .nav-tabs {
+        display: flex;
+        margin-bottom: 20px;
+        padding: 6px;
+        border-radius: 16px;
+        overflow-x: auto;
+        gap: 5px;
+    }
+
+    .tab {
+        flex: 1;
+        min-width: 120px;
+        padding: 12px 16px;
+        text-align: center;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: 500;
+        font-size: 0.9rem;
+        white-space: nowrap;
+        color: var(--text-muted);
+    }
+
+    .tab.active {
+        background: var(--bg-glass);
+        backdrop-filter: blur(15px);
+        color: var(--text-on-dark);
+        border: 1px solid var(--border-color);
+    }
+
+    /* Main layout */
+    .main-content {
+        display: grid;
+        grid-template-columns: 1fr 350px;
+        gap: 20px;
+        align-items: start;
+    }
+
+    @media (max-width: 1024px) {
+        .main-content {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Planning section */
+    .planning-section {
+        padding: 25px;
+        background: var(--bg-secondary);
+        color: var(--text-on-card);
+    }
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .section-title {
+        font-size: 1.4rem;
+        font-weight: 600;
+        color: var(--text-on-card);
+    }
+
+    .add-btn {
+        background: linear-gradient(45deg, var(--accent-primary), var(--accent-secondary));
+        border: none;
+        border-radius: 25px;
+        padding: 12px 20px;
+        color: white;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 500;
+        box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3);
+        transition: all 0.3s ease;
+    }
+
+    .add-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(124, 58, 237, 0.4);
+    }
+
+    /* Search and filters */
+    .controls {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+    }
+
+    .search-input {
+        flex: 1;
+        min-width: 250px;
+        padding: 12px 18px;
+        border: 2px solid var(--border-color);
+        border-radius: 20px;
+        background: var(--bg-card);
+        color: var(--text-on-card);
+        backdrop-filter: blur(10px);
+        font-weight: 500;
+    }
+
+    .search-input::placeholder {
+        color: var(--text-muted);
+    }
+
+    .filter-group {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .filter-btn {
+        padding: 8px 16px;
+        border: 2px solid var(--border-color);
+        border-radius: 15px;
+        background: var(--bg-card);
+        color: var(--text-on-card);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+
+    .filter-btn.active {
+        background: linear-gradient(45deg, var(--accent-primary), var(--accent-secondary));
+        border-color: var(--accent-primary);
+        color: white;
+    }
+
+    /* Bulk actions */
+    .bulk-actions {
+        display: none;
+        position: sticky;
+        top: 10px;
+        z-index: 100;
+        background: var(--bg-card);
+        border: 2px solid var(--accent-primary);
+        border-radius: 15px;
+        padding: 15px;
+        margin-bottom: 20px;
+        animation: slideDown 0.3s ease;
+    }
+
+    .bulk-actions.active {
+        display: block;
+    }
+
+    @keyframes slideDown {
+        from { transform: translateY(-20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+
+    .bulk-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+
+    .bulk-buttons {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .bulk-btn {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 0.8rem;
+        color: white;
+        transition: all 0.3s ease;
+    }
+
+    .bulk-btn:hover {
+        transform: translateY(-1px);
+    }
+
+    .bulk-btn.status {
+        background: var(--accent-primary);
+    }
+
+    .bulk-btn.sms {
+        background: var(--accent-success);
+    }
+
+    .bulk-btn.delete {
+        background: var(--accent-error);
+    }
+
+    /* Device selection */
+    .device-checkbox {
+        position: absolute;
+        top: 15px;
+        left: 15px;
+        width: 20px;
+        height: 20px;
+        border: 2px solid var(--border-color);
+        border-radius: 4px;
+        background: var(--bg-card);
+        cursor: pointer;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+    }
+
+    .device-checkbox.visible {
+        display: flex;
+    }
+
+    .device-checkbox.checked {
+        background: var(--accent-primary);
+        border-color: var(--accent-primary);
+    }
+
+    .device-checkbox.checked::after {
+        content: "✓";
+        color: white;
+        font-size: 12px;
+        font-weight: bold;
+    }
+
+    .device-card.selecting {
+        padding-left: 50px;
+    }
+
+    /* Device cards */
+    .device-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .device-card {
+        background: var(--bg-card);
+        padding: 20px;
+        border-radius: 15px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        border: 2px solid var(--border-color);
+        color: var(--text-on-card);
+        box-shadow: 0 4px 12px var(--shadow-color);
+    }
+
+    .device-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 40px var(--shadow-color);
+        border-color: var(--accent-primary);
+    }
+
+    /* Urgency indicators */
+    .urgency-normal { border-left: 6px solid var(--accent-success); }
+    .urgency-urgent { border-left: 6px solid var(--accent-warning); }
+    .urgency-express { 
+        border-left: 6px solid var(--accent-error);
+        animation: pulse-glow 2s infinite;
+    }
+
+    @keyframes pulse-glow {
+        0%, 100% { box-shadow: 0 4px 12px var(--shadow-color), 0 0 0 0 rgba(239, 68, 68, 0.4); }
+        50% { box-shadow: 0 4px 12px var(--shadow-color), 0 0 15px 5px rgba(239, 68, 68, 0.2); }
+    }
+
+    /* Priority indicators */
+    .priority-indicator {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        animation: pulse 2s infinite;
+    }
+
+    .priority-high {
+        background: var(--accent-warning);
+    }
+
+    .priority-critical {
+        background: var(--accent-error);
+    }
+
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.2); opacity: 0.7; }
+    }
+
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 15px;
+        gap: 15px;
+    }
+
+    .device-info {
+        flex: 1;
+        cursor: pointer;
+    }
+
+    .device-title {
+        font-weight: 700;
+        font-size: 1.2rem;
+        margin-bottom: 8px;
+        color: var(--text-on-card);
+    }
+
+    .device-client {
+        color: var(--text-muted);
+        font-size: 0.95rem;
+        font-weight: 500;
+    }
+
+    .status-badge {
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+    }
+
+    .status-received { background: linear-gradient(45deg, var(--accent-info), #0ea5e9); color: white; }
+    .status-diagnostic { background: linear-gradient(45deg, var(--accent-warning), #f97316); color: white; }
+    .status-waiting { background: linear-gradient(45deg, var(--accent-error), #dc2626); color: white; }
+    .status-repaired { background: linear-gradient(45deg, var(--accent-success), #059669); color: white; }
+    .status-delivered { background: linear-gradient(45deg, var(--accent-secondary), var(--accent-primary)); color: white; }
+
+    .card-problem {
+        margin-bottom: 15px;
+        color: var(--text-on-card);
+        font-size: 0.95rem;
+        cursor: pointer;
+        line-height: 1.5;
+        font-weight: 500;
+    }
+
+    .card-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin-bottom: 15px;
+        font-weight: 500;
+    }
+
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .time-spent {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        background: var(--bg-glass-dark);
+        padding: 2px 6px;
+        border-radius: 10px;
+    }
+
+    .card-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+
+    .device-time {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+
+    .device-price {
+        font-weight: 700;
+        color: var(--accent-primary);
+        font-size: 1rem;
+    }
+
+    .card-actions {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+    }
+
+    .action-btn {
+        padding: 6px 12px;
+        font-size: 0.75rem;
+        border-radius: 10px;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        color: white;
+    }
+
+    .action-btn:hover {
+        transform: translateY(-1px);
+    }
+
+    .btn-sms {
+        background: linear-gradient(45deg, #10b981, #059669);
+    }
+
+    .btn-invoice {
+        background: linear-gradient(45deg, var(--accent-secondary), var(--accent-primary));
+    }
+
+    .btn-edit {
+        background: linear-gradient(45deg, var(--accent-primary), var(--accent-secondary));
+    }
+
+    /* Quick actions dropdown */
+    .quick-actions-dropdown {
+        position: relative;
+        display: inline-block;
+    }
+
+    .dropdown-content {
+        display: none;
+        position: absolute;
+        right: 0;
+        top: 100%;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 5px 0;
+        z-index: 1000;
+        min-width: 150px;
+        box-shadow: 0 8px 32px var(--shadow-color);
+    }
+
+    .dropdown-content.show {
+        display: block;
+        animation: fadeIn 0.2s ease;
+    }
+
+    .dropdown-item {
+        display: block;
+        padding: 8px 15px;
+        color: var(--text-secondary);
+        text-decoration: none;
+        font-size: 0.85rem;
+        border: none;
+        background: none;
+        width: 100%;
+        text-align: left;
+        cursor: pointer;
+    }
+
+    .dropdown-item:hover {
+        background: var(--bg-glass);
+    }
+
+    /* Sidebar */
+    .sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .stats-card {
+        padding: 20px;
+        background: var(--bg-secondary);
+        color: var(--text-on-card);
+        border: 2px solid var(--border-color);
+    }
+
+    .stats-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: 15px;
+        color: var(--text-on-card);
+    }
+
+    /* Quick stats */
+    .quick-stats {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin: 15px 0;
+    }
+
+    .quick-stat {
+        padding: 10px;
+        border-radius: 8px;
+        text-align: center;
+        font-size: 0.8rem;
+    }
+
+    .quick-stat.urgent {
+        background: rgba(239, 68, 68, 0.2);
+        border: 1px solid var(--accent-error);
+    }
+
+    .quick-stat.revenue {
+        background: rgba(16, 185, 129, 0.2);
+        border: 1px solid var(--accent-success);
+    }
+
+    .quick-stat-number {
+        font-size: 1.2rem;
+        font-weight: 700;
+        display: block;
+    }
+
+    /* Workload indicator */
+    .workload-bar {
+        height: 6px;
+        background: var(--bg-glass-dark);
+        border-radius: 3px;
+        margin: 10px 0;
+        overflow: hidden;
+    }
+
+    .workload-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--accent-success), var(--accent-warning), var(--accent-error));
+        border-radius: 3px;
+        transition: width 0.3s ease;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+    }
+
+    .stat-item {
+        text-align: center;
+        padding: 15px;
+        border-radius: 10px;
+        background: var(--bg-card);
+        border: 2px solid var(--border-color);
+    }
+
+    .stat-number {
+        font-size: 1.8rem;
+        font-weight: 700;
+        background: linear-gradient(45deg, var(--accent-primary), var(--accent-secondary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .stat-label {
+        color: var(--text-muted);
+        font-size: 0.8rem;
+        margin-top: 5px;
+        font-weight: 500;
+    }
+
+    /* Quick actions */
+    .quick-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-top: 15px;
+    }
+
+    /* Reminders */
+    .reminders-list {
+        margin-top: 15px;
+    }
+
+    .reminder-item {
+        padding: 10px;
+        margin-bottom: 8px;
+        background: var(--bg-glass-dark);
+        border-radius: 8px;
+        font-size: 0.85rem;
+        border-left: 3px solid var(--accent-primary);
+        color: var(--text-secondary);
+    }
+
+    /* Modal */
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(10px);
+        z-index: 1000;
+        padding: 20px;
+    }
+
+    .modal.active {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-content {
+        width: 100%;
+        max-width: 500px;
+        max-height: 90vh;
+        overflow-y: auto;
+        padding: 30px;
+        border-radius: 20px;
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        border: 1px solid var(--border-color);
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+    }
+
+    .modal-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .close-btn {
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        font-size: 1.5rem;
+        cursor: pointer;
+        padding: 5px;
+        border-radius: 50%;
+        transition: all 0.3s ease;
+    }
+
+    .close-btn:hover {
+        background: var(--bg-glass);
+        color: var(--text-primary);
+    }
+
+    /* Form styles */
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group.full-width {
+        grid-column: 1 / -1;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+        color: var(--text-primary);
+        font-size: 0.9rem;
+    }
+
+    .form-input, .form-select, .form-textarea {
+        width: 100%;
+        padding: 12px 15px;
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        background: var(--bg-card);
+        color: var(--text-primary);
+        backdrop-filter: blur(10px);
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+    }
+
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+        outline: none;
+        border-color: var(--accent-primary);
+        box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+    }
+
+    .form-input::placeholder, .form-textarea::placeholder {
+        color: var(--text-muted);
+    }
+
+    .form-textarea {
+        resize: vertical;
+        min-height: 80px;
+    }
+
+    /* Photo upload */
+    .photo-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+        margin-top: 10px;
+    }
+
+    .photo-area {
+        aspect-ratio: 4/3;
+        border: 2px dashed var(--border-color);
+        border-radius: 10px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: var(--bg-glass-dark);
+        color: var(--text-muted);
+    }
+
+    .photo-area:hover {
+        border-color: var(--accent-primary);
+        background: var(--bg-glass);
+        color: var(--text-primary);
+    }
+
+    .photo-preview {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 8px;
+    }
+
+    /* Form buttons */
+    .form-actions {
+        display: flex;
+        gap: 15px;
+        margin-top: 25px;
+    }
+
+    .form-actions .btn {
+        flex: 1;
+        padding: 14px;
+    }
+
+    /* Empty state */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        border-radius: 15px;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        color: var(--text-primary);
+        box-shadow: 0 4px 12px var(--shadow-color);
+    }
+
+    .empty-icon {
+        font-size: 4rem;
+        margin-bottom: 20px;
+        opacity: 0.7;
+    }
+
+    .empty-title {
+        font-size: 1.3rem;
+        margin-bottom: 10px;
+        color: var(--text-primary);
+        font-weight: 600;
+    }
+
+    .empty-desc {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+    }
+
+    /* Animations */
+    .fade-in {
+        animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .bounce-in {
+        animation: bounceIn 0.5s ease;
+    }
+
+    @keyframes bounceIn {
+        0% { transform: scale(0.3); opacity: 0; }
+        50% { transform: scale(1.05); }
+        70% { transform: scale(0.9); }
+        100% { transform: scale(1); opacity: 1; }
+    }
+
+    /* Notification */
+    .notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        padding: 15px 25px;
+        border-radius: 10px;
+        backdrop-filter: blur(10px);
+        z-index: 10001;
+        animation: slideIn 0.3s ease;
+        border: 1px solid var(--border-color);
+        box-shadow: 0 8px 32px var(--shadow-color);
+    }
+
+    .notification.success {
+        border-left: 4px solid var(--accent-success);
+    }
+
+    .notification.warning {
+        border-left: 4px solid var(--accent-warning);
+    }
+
+    .notification.error {
+        border-left: 4px solid var(--accent-error);
+    }
+
+    @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+
+    /* Mobile responsive */
+    @media (max-width: 768px) {
+        .container {
+            padding: 10px;
+        }
+        
+        .header {
+            padding: 15px 20px;
+        }
+        
+        .planning-section {
+            padding: 20px;
+        }
+        
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .controls {
+            flex-direction: column;
+        }
+        
+        .search-input {
+            min-width: unset;
+        }
+        
+        .card-actions {
+            justify-content: center;
+        }
+    }
+</style>
+```
+
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header glass">
+            <h1>
+                <span>⚡</span>
+                <span>HeroMobile</span>
+            </h1>
+            <div class="date-nav">
+                <button class="btn" onclick="changeDay(-1)">‹ Hier</button>
+                <span id="currentDate">Aujourd'hui</span>
+                <button class="btn" onclick="changeDay(1)">Demain ›</button>
+            </div>
+        </header>
+
+```
+    <!-- Navigation -->
+    <nav class="nav-tabs glass">
+        <div class="tab active" onclick="switchTab('planning')">📅 Planning</div>
+        <div class="tab" onclick="switchTab('clients')">👥 Clients</div>
+        <div class="tab" onclick="switchTab('stats')">📊 Stats</div>
+        <div class="tab" onclick="switchTab('stock')">📦 Stock</div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Planning Section -->
+        <main class="planning-section glass" id="planning-section">
+            <div class="section-header">
+                <h2 class="section-title" id="dayTitle">Planning du Jour</h2>
+                <button class="add-btn" onclick="openDeviceModal()">
+                    <span>➕</span>
+                    <span>Nouvel Appareil</span>
+                </button>
+            </div>
+
+            <!-- Controls avec sélection multiple -->
+            <div class="controls">
+                <input type="text" class="search-input" placeholder="🔍 Rechercher par client, modèle..." id="searchInput" oninput="filterDevices()">
+                <div class="filter-group">
+                    <button class="filter-btn active" data-filter="all" onclick="setFilter('all')">Tous</button>
+                    <button class="filter-btn" data-filter="urgent" onclick="setFilter('urgent')">🔴 Urgents</button>
+                    <button class="filter-btn" data-filter="repaired" onclick="setFilter('repaired')">✅ Réparés</button>
+                    <button class="btn" onclick="toggleBulkSelect()">📋 Sélection</button>
+                </div>
+            </div>
+
+            <!-- Actions groupées -->
+            <div class="bulk-actions" id="bulkActions">
+                <div class="bulk-header">
+                    <span><strong id="selectedCount">0</strong> appareil(s) sélectionné(s)</span>
+                    <button class="btn" onclick="toggleBulkSelect()">✕ Fermer</button>
+                </div>
+                <div class="bulk-buttons">
+                    <button class="bulk-btn status" onclick="bulkChangeStatus()">📝 Changer Statut</button>
+                    <button class="bulk-btn sms" onclick="bulkSendSMS()">📱 SMS Groupé</button>
+                    <button class="bulk-btn delete" onclick="bulkDelete()">🗑️ Supprimer</button>
+                </div>
+            </div>
+
+            <!-- Device List -->
+            <div class="device-grid" id="deviceGrid">
+                <!-- Populated by JavaScript -->
+            </div>
+        </main>
+
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <!-- Stats avec charge de travail -->
+            <div class="stats-card glass">
+                <h3 class="stats-title">📈 Aujourd'hui</h3>
+                
+                <!-- Stats rapides -->
+                <div class="quick-stats">
+                    <div class="quick-stat urgent">
+                        <span class="quick-stat-number" id="urgentCount">0</span>
+                        <span>Urgents</span>
+                    </div>
+                    <div class="quick-stat revenue">
+                        <span class="quick-stat-number" id="todayEarnings">0€</span>
+                        <span>Gagné</span>
+                    </div>
+                </div>
+
+                <!-- Charge de travail -->
+                <div style="margin: 15px 0;">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 5px;">
+                        <span>Charge de travail</span>
+                        <span id="workloadPercent">0%</span>
+                    </div>
+                    <div class="workload-bar">
+                        <div class="workload-fill" id="workloadFill" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-number" id="totalCount">0</div>
+                        <div class="stat-label">Total</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="repairedCount">0</div>
+                        <div class="stat-label">Réparés</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="revenueCount">0€</div>
+                        <div class="stat-label">Revenus</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="pendingCount">0</div>
+                        <div class="stat-label">En cours</div>
+                    </div>
+                </div>
+                
+                <div class="quick-actions">
+                    <button class="btn btn-primary" onclick="exportDay()">📋 Exporter</button>
+                    <button class="btn" onclick="showWeekStats()">📊 Stats Semaine</button>
+                    <button class="btn" onclick="showClientHistory()">👥 Historique Clients</button>
+                </div>
+            </div>
+
+            <!-- Rappels -->
+            <div class="stats-card glass glass-darker">
+                <h3 class="stats-title">🔔 Rappels</h3>
+                <div class="reminders-list" id="remindersList">
+                    <!-- Populated by JavaScript -->
+                </div>
+            </div>
+        </aside>
+    </div>
+</div>
+
+<!-- Device Modal -->
+<div class="modal" id="deviceModal">
+    <div class="modal-content glass">
+        <div class="modal-header">
+            <h3 class="modal-title" id="modalTitle">📱 Nouvel Appareil</h3>
+            <button class="close-btn" onclick="closeModal()">&times;</button>
+        </div>
+
+        <form id="deviceForm" onsubmit="handleSubmit(event)">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label">Client *</label>
+                    <input type="text" class="form-input" id="clientName" required placeholder="Nom du client">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Téléphone</label>
+                    <input type="tel" class="form-input" id="clientPhone" placeholder="06 12 34 56 78">
+                </div>
+            </div>
+
+            <div class="form-group full-width">
+                <label class="form-label">Appareil *</label>
+                <input type="text" class="form-input" id="deviceModel" required placeholder="iPhone 15, Samsung Galaxy S24...">
+            </div>
+
+            <div class="form-group full-width">
+                <label class="form-label">Problème *</label>
+                <textarea class="form-textarea" id="deviceProblem" required placeholder="Décrivez le problème rencontré..."></textarea>
+            </div>
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label">Prix (€)</label>
+                    <input type="number" class="form-input" id="devicePrice" placeholder="0" step="0.01" min="0">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Temps estimé (heures)</label>
+                    <input type="number" class="form-input" id="deviceDuration" placeholder="2" step="0.5" min="0" max="48">
+                </div>
+            </div>
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label">Statut</label>
+                    <select class="form-select" id="deviceStatus">
+                        <option value="received">📥 Reçu</option>
+                        <option value="diagnostic">🔍 Diagnostic</option>
+                        <option value="waiting">⏳ Attente pièces</option>
+                        <option value="repaired">✅ Réparé</option>
+                        <option value="delivered">🚚 Livré</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Urgence</label>
+                    <select class="form-select" id="deviceUrgency">
+                        <option value="normal">🟢 Normal</option>
+                        <option value="urgent">🟠 Urgent</option>
+                        <option value="express">🔴 Express 24h</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label">Priorité</label>
+                    <select class="form-select" id="devicePriority">
+                        <option value="normal">🟢 Normale</option>
+                        <option value="high">🟠 Haute</option>
+                        <option value="critical">🔴 Critique</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Garantie</label>
+                    <select class="form-select" id="deviceWarranty">
+                        <option value="3">3 mois</option>
+                        <option value="6">6 mois</option>
+                        <option value="12">12 mois</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group full-width">
+                <label class="form-label">Pièces nécessaires</label>
+                <input type="text" class="form-input" id="deviceParts" placeholder="Écran, batterie, caméra...">
+            </div>
+
+            <div class="form-group full-width">
+                <label class="form-label">Photos</label>
+                <div class="photo-grid">
+                    <div class="photo-area" onclick="triggerPhotoUpload('before')">
+                        <div id="beforePreview">📸<br><small>Avant</small></div>
+                    </div>
+                    <div class="photo-area" onclick="triggerPhotoUpload('after')">
+                        <div id="afterPreview">📸<br><small>Après</small></div>
+                    </div>
+                </div>
+                <input type="file" id="beforePhoto" accept="image/*" style="display: none;" onchange="handlePhotoUpload('before')">
+                <input type="file" id="afterPhoto" accept="image/*" style="display: none;" onchange="handlePhotoUpload('after')">
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="btn" onclick="closeModal()">Annuler</button>
+                <button type="submit" class="btn btn-primary">💾 Sauvegarder</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Application State
+    let currentDate = new Date();
+    let devices = {};
+    let currentEditingIndex = null;
+    let currentFilter = 'all';
+    let isSelecting = false;
+    let selectedDevices = new Set();
+
+    // Status mappings
+    const statusLabels = {
+        'received': '📥 Reçu',
+        'diagnostic': '🔍 Diagnostic',
+        'waiting': '⏳ Attente pièces',
+        'repaired': '✅ Réparé',
+        'delivered': '🚚 Livré'
+    };
+
+    const urgencyLabels = {
+        'normal': '🟢 Normal',
+        'urgent': '🟠 Urgent',
+        'express': '🔴 Express'
+    };
+
+    const priorityLabels = {
+        'normal': '🟢 Normale',
+        'high': '🟠 Haute', 
+        'critical': '🔴 Critique'
+    };
+
+    // Initialize app
+    document.addEventListener('DOMContentLoaded', function() {
+        loadSampleData();
+        updateDisplay();
+        startTimeTracking();
+    });
+
+    // Time tracking
+    function startTimeTracking() {
+        setInterval(updateTimeSpent, 60000); // Update every minute
+    }
+
+    function updateTimeSpent() {
+        const dateKey = getDateKey();
+        const dayDevices = devices[dateKey] || [];
+        
+        dayDevices.forEach(device => {
+            if (device.status === 'diagnostic' || device.status === 'waiting') {
+                const startTime = new Date(device.createdAt || new Date());
+                const now = new Date();
+                const hoursSpent = ((now - startTime) / (1000 * 60 * 60)).toFixed(1);
+                device.timeSpent = hoursSpent;
+            }
+        });
+        
+        updateDisplay();
+    }
+
+    // Date management
+    function changeDay(direction) {
+        currentDate.setDate(currentDate.getDate() + direction);
+        updateDisplay();
+    }
+
+    function getDateKey() {
+        return currentDate.toISOString().split('T')[0];
+    }
+
+    function updateDisplay() {
+        updateDateDisplay();
+        updateDeviceList();
+        updateStats();
+        updateReminders();
+    }
+
+    function updateDateDisplay() {
+        const options = { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        };
+        const dateStr = currentDate.toLocaleDateString('fr-FR', options);
+        document.getElementById('currentDate').textContent = dateStr;
+        document.getElementById('dayTitle').textContent = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
+    }
+
+    // Device management
+    function updateDeviceList() {
+        const dateKey = getDateKey();
+        const dayDevices = devices[dateKey] || [];
+        const deviceGrid = document.getElementById('deviceGrid');
+        
+        if (dayDevices.length === 0) {
+            deviceGrid.innerHTML = `
+                <div class="empty-state glass-darker">
+                    <div class="empty-icon">📱</div>
+                    <div class="empty-title">Aucun appareil aujourd'hui</div>
+                    <div class="empty-desc">Cliquez sur "Nouvel Appareil" pour commencer</div>
+                </div>
+            `;
+            return;
+        }
+
+        deviceGrid.innerHTML = dayDevices.map((device, index) => createDeviceCard(device, index)).join('');
+        applyCurrentFilter();
+    }
+
+    function createDeviceCard(device, index) {
+        const urgencyClass = device.urgency ? `urgency-${device.urgency}` : 'urgency-normal';
+        const statusLabel = statusLabels[device.status] || device.status;
+        const timeSpent = device.timeSpent ? `<span class="time-spent">⏱️ ${device.timeSpent}h</span>` : '';
+        const priorityIndicator = device.priority && device.priority !== 'normal' ? 
+            `<div class="priority-indicator priority-${device.priority === 'critical' ? 'critical' : 'high'}"></div>` : '';
+        const isSelected = selectedDevices.has(index);
+        
+        return `
+            <div class="device-card glass-darker bounce-in ${urgencyClass} ${isSelecting ? 'selecting' : ''}" data-index="${index}">
+                ${isSelecting ? `<div class="device-checkbox ${isSelecting ? 'visible' : ''} ${isSelected ? 'checked' : ''}" onclick="toggleDeviceSelection(${index})"></div>` : ''}
+                ${priorityIndicator}
+                <div class="card-header">
+                    <div class="device-info" onclick="${isSelecting ? `toggleDeviceSelection(${index})` : `editDevice(${index})`}">
+                        <div class="device-title">${device.model}</div>
+                        <div class="device-client">👤 ${device.client} ${device.phone ? '• ' + device.phone : ''}</div>
+                    </div>
+                    <div class="status-badge status-${device.status}">${statusLabel}</div>
+                </div>
+                
+                <div class="card-problem" onclick="${isSelecting ? `toggleDeviceSelection(${index})` : `editDevice(${index})`}">
+                    🔧 ${device.problem}
+                </div>
+                
+                ${device.parts || device.duration || device.warranty || device.timeSpent ? `
+                    <div class="card-meta">
+                        ${device.parts ? `<div class="meta-item">🔧 ${device.parts}</div>` : ''}
+                        ${device.duration ? `<div class="meta-item">⏱️ ${device.duration}h estimé</div>` : ''}
+                        ${device.warranty ? `<div class="meta-item">🛡️ ${device.warranty}m</div>` : ''}
+                        ${timeSpent}
+                    </div>
+                ` : ''}
+                
+                <div class="card-footer">
+                    <div class="device-time">⏰ ${device.time}</div>
+                    <div class="device-price">${device.price ? device.price + '€' : 'Prix à définir'}</div>
+                </div>
+                
+                ${!isSelecting ? `
+                    <div class="card-actions">
+                        ${device.phone ? `<button class="action-btn btn-sms" onclick="sendSMS(${index})">📱 SMS</button>` : ''}
+                        <div class="quick-actions-dropdown">
+                            <button class="action-btn btn-invoice" onclick="toggleDropdown(${index})">⚙️ Actions</button>
+                            <div class="dropdown-content" id="dropdown-${index}">
+                                <button class="dropdown-item" onclick="generateInvoice(${index})">📄 Facture</button>
+                                <button class="dropdown-item" onclick="duplicateDevice(${index})">📋 Dupliquer</button>
+                                <button class="dropdown-item" onclick="showDeviceHistory(${index})">📊 Historique</button>
+                                <button class="dropdown-item" onclick="deleteDevice(${index})" style="color: var(--accent-error)">🗑️ Supprimer</button>
+                            </div>
+                        </div>
+                        <button class="action-btn btn-edit" onclick="editDevice(${index})">✏️ Modifier</button>
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    }
+
+    // Modal management
+    function openDeviceModal() {
+        currentEditingIndex = null;
+        document.getElementById('deviceForm').reset();
+        document.getElementById('modalTitle').textContent = '📱 Nouvel Appareil';
+        document.getElementById('beforePreview').innerHTML = '📸<br><small>Avant</small>';
+        document.getElementById('afterPreview').innerHTML = '📸<br><small>Après</small>';
+        document.getElementById('deviceModal').classList.add('active');
+    }
+
+    function editDevice(index) {
+        const dateKey = getDateKey();
+        const device = devices[dateKey][index];
+        currentEditingIndex = index;
+        
+        // Populate form
+        document.getElementById('clientName').value = device.client;
+        document.getElementById('clientPhone').value = device.phone || '';
+        document.getElementById('deviceModel').value = device.model;
+        document.getElementById('deviceProblem').value = device.problem;
+        document.getElementById('devicePrice').value = device.price || '';
+        document.getElementById('deviceDuration').value = device.duration || '';
+        document.getElementById('deviceStatus').value = device.status;
+        document.getElementById('deviceUrgency').value = device.urgency || 'normal';
+        document.getElementById('devicePriority').value = device.priority || 'normal';
+        document.getElementById('deviceParts').value = device.parts || '';
+        document.getElementById('deviceWarranty').value = device.warranty || '3';
+        
+        document.getElementById('modalTitle').textContent = '✏️ Modifier Appareil';
+        document.getElementById('deviceModal').classList.add('active');
+    }
+
+    function closeModal() {
+        document.getElementById('deviceModal').classList.remove('active');
+    }
+
+    function handleSubmit(event) {
+        event.preventDefault();
+        
+        const deviceData = {
+            client: document.getElementById('clientName').value,
+            phone: document.getElementById('clientPhone').value,
+            model: document.getElementById('deviceModel').value,
+            problem: document.getElementById('deviceProblem').value,
+            price: document.getElementById('devicePrice').value,
+            duration: document.getElementById('deviceDuration').value,
+            status: document.getElementById('deviceStatus').value,
+            urgency: document.getElementById('deviceUrgency').value,
+            priority: document.getElementById('devicePriority').value,
+            parts: document.getElementById('deviceParts').value,
+            warranty: document.getElementById('deviceWarranty').value,
+            time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+            date: getDateKey(),
+            createdAt: new Date().toISOString()
+        };
+
+        const dateKey = getDateKey();
+        if (!devices[dateKey]) {
+            devices[dateKey] = [];
+        }
+
+        if (currentEditingIndex !== null) {
+            // Conserver la date de création originale lors de la modification
+            if (devices[dateKey][currentEditingIndex].createdAt) {
+                deviceData.createdAt = devices[dateKey][currentEditingIndex].createdAt;
+            }
+            devices[dateKey][currentEditingIndex] = deviceData;
+            showNotification('✅ Appareil modifié !', 'success');
+        } else {
+            devices[dateKey].push(deviceData);
+            showNotification('✅ Appareil ajouté !', 'success');
+        }
+
+        updateDisplay();
+        closeModal();
+        autoSave();
+    }
+
+    // Photo handling
+    function triggerPhotoUpload(type) {
+        document.getElementById(type + 'Photo').click();
+    }
+
+    function handlePhotoUpload(type) {
+        const fileInput = document.getElementById(type + 'Photo');
+        const preview = document.getElementById(type + 'Preview');
+        
+        if (fileInput.files && fileInput.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.innerHTML = `<img src="${e.target.result}" class="photo-preview" alt="${type} photo">`;
+            };
+            reader.readAsDataURL(fileInput.files[0]);
+        }
+    }
+
+    // Filter and search
+    function setFilter(filter) {
+        currentFilter = filter;
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.filter === filter);
+        });
+        applyCurrentFilter();
+    }
+
+    function filterDevices() {
+        applyCurrentFilter();
+    }
+
+    function applyCurrentFilter() {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        const cards = document.querySelectorAll('.device-card');
+        
+        cards.forEach(card => {
+            let show = true;
+            
+            // Apply search filter
+            if (searchTerm) {
+                const text = card.textContent.toLowerCase();
+                show = text.includes(searchTerm);
+            }
+            
+            // Apply status filter
+            if (show && currentFilter !== 'all') {
+                if (currentFilter === 'urgent') {
+                    show = card.classList.contains('urgency-urgent') || card.classList.contains('urgency-express');
+                } else if (currentFilter === 'repaired') {
+                    show = card.querySelector('.status-repaired') !== null;
+                }
+            }
+            
+            card.style.display = show ? 'block' : 'none';
+            if (show) {
+                card.classList.add('fade-in');
+            }
+        });
+    }
+
+    // Statistics avec nouvelles métriques
+    function updateStats() {
+        const dateKey = getDateKey();
+        const dayDevices = devices[dateKey] || [];
+        
+        const total = dayDevices.length;
+        const repaired = dayDevices.filter(d => d.status === 'repaired' || d.status === 'delivered').length;
+        const pending = dayDevices.filter(d => d.status !== 'repaired' && d.status !== 'delivered').length;
+        const urgent = dayDevices.filter(d => d.urgency === 'urgent' || d.urgency === 'express' || d.priority === 'high' || d.priority === 'critical').length;
+        
+        const revenue = dayDevices
+            .filter(d => (d.status === 'repaired' || d.status === 'delivered') && d.price)
+            .reduce((sum, d) => sum + parseFloat(d.price || 0), 0);
+
+        const totalWorkload = dayDevices.reduce((sum, d) => sum + parseFloat(d.duration || 1), 0);
+        const workloadPercent = Math.min((totalWorkload / 12) * 100, 100); // 12h = 100%
+
+        document.getElementById('totalCount').textContent = total;
+        document.getElementById('repairedCount').textContent = repaired;
+        document.getElementById('pendingCount').textContent = pending;
+        document.getElementById('revenueCount').textContent = Math.round(revenue) + '€';
+        document.getElementById('urgentCount').textContent = urgent;
+        document.getElementById('todayEarnings').textContent = Math.round(revenue) + '€';
+        document.getElementById('workloadPercent').textContent = Math.round(workloadPercent) + '%';
+        document.getElementById('workloadFill').style.width = workloadPercent + '%';
+
+        updateReminders();
+    }
+
+    function updateReminders() {
+        const dateKey = getDateKey();
+        const dayDevices = devices[dateKey] || [];
+        const reminders = [];
+
+        // Express devices
+        const expressDevices = dayDevices.filter(d => d.urgency === 'express' && !['repaired', 'delivered'].includes(d.status));
+        if (expressDevices.length > 0) {
+            reminders.push(`🔴 ${expressDevices.length} appareil(s) express à traiter en priorité`);
+        }
+
+        // Critical priority
+        const criticalDevices = dayDevices.filter(d => d.priority === 'critical' && !['repaired', 'delivered'].includes(d.status));
+        if (criticalDevices.length > 0) {
+            reminders.push(`⚠️ ${criticalDevices.length} appareil(s) critique(s)`);
+        }
+
+        // Waiting for parts
+        const waitingDevices = dayDevices.filter(d => d.status === 'waiting');
+        if (waitingDevices.length > 0) {
+            reminders.push(`⏳ ${waitingDevices.length} appareil(s) en attente de pièces`);
+        }
+
+        // Ready for delivery
+        const repairedDevices = dayDevices.filter(d => d.status === 'repaired');
+        if (repairedDevices.length > 0) {
+            reminders.push(`✅ ${repairedDevices.length} appareil(s) prêts pour livraison`);
+        }
+
+        const remindersList = document.getElementById('remindersList');
+        if (reminders.length === 0) {
+            remindersList.innerHTML = '<div style="color: rgba(255,255,255,0.6); font-style: italic; text-align: center; padding: 20px;">✨ Aucun rappel aujourd\'hui</div>';
+        } else {
+            remindersList.innerHTML = reminders.map(reminder => 
+                `<div class="reminder-item">${reminder}</div>`
+            ).join('');
+        }
+    }
+
+    // Sélection multiple
+    function toggleBulkSelect() {
+        isSelecting = !isSelecting;
+        selectedDevices.clear();
+        
+        if (isSelecting) {
+            document.getElementById('bulkActions').classList.add('active');
+        } else {
+            document.getElementById('bulkActions').classList.remove('active');
+        }
+        
+        updateDeviceList();
+        updateSelectedCount();
+    }
+
+    function toggleDeviceSelection(index) {
+        if (selectedDevices.has(index)) {
+            selectedDevices.delete(index);
+        } else {
+            selectedDevices.add(index);
+        }
+        updateSelectedCount();
+        updateDeviceList();
+    }
+
+    function updateSelectedCount() {
+        document.getElementById('selectedCount').textContent = selectedDevices.size;
+    }
+
+    // Actions groupées
+    function bulkChangeStatus() {
+        if (selectedDevices.size === 0) {
+            showNotification('Aucun appareil sélectionné', 'warning');
+            return;
+        }
+        
+        const newStatus = prompt('Nouveau statut (received/diagnostic/waiting/repaired/delivered):');
+        if (newStatus && statusLabels[newStatus]) {
+            const dateKey = getDateKey();
+            selectedDevices.forEach(index => {
+                if (devices[dateKey][index]) {
+                    devices[dateKey][index].status = newStatus;
+                }
+            });
+            
+            showNotification(`${selectedDevices.size} appareils mis à jour`, 'success');
+            toggleBulkSelect();
+            updateDisplay();
+        }
+    }
+
+    function bulkSendSMS() {
+        if (selectedDevices.size === 0) {
+            showNotification('Aucun appareil sélectionné', 'warning');
+            return;
+        }
+        
+        const message = prompt('Message à envoyer à tous les clients sélectionnés:');
+        if (message) {
+            const dateKey = getDateKey();
+            let sentCount = 0;
+            
+            selectedDevices.forEach(index => {
+                const device = devices[dateKey][index];
+                if (device && device.phone) {
+                    const personalizedMessage = message.replace('{client}', device.client).replace('{model}', device.model);
+                    const smsUrl = `sms:${device.phone}?body=${encodeURIComponent(personalizedMessage)}`;
+                    window.open(smsUrl, '_blank');
+                    sentCount++;
+                }
+            });
+            
+            showNotification(`${sentCount} SMS ouverts`, 'success');
+            toggleBulkSelect();
+        }
+    }
+
+    function bulkDelete() {
+        if (selectedDevices.size === 0) {
+            showNotification('Aucun appareil sélectionné', 'warning');
+            return;
+        }
+        
+        if (confirm(`Supprimer ${selectedDevices.size} appareil(s) sélectionné(s) ?`)) {
+            const dateKey = getDateKey();
+            const sortedIndexes = Array.from(selectedDevices).sort((a, b) => b - a);
+            
+            sortedIndexes.forEach(index => {
+                devices[dateKey].splice(index, 1);
+            });
+            
+            showNotification(`${selectedDevices.size} appareils supprimés`, 'success');
+            toggleBulkSelect();
+            updateDisplay();
+        }
+    }
+
+    // Dropdown actions
+    function toggleDropdown(index) {
+        // Fermer tous les autres dropdowns
+        document.querySelectorAll('.dropdown-content').forEach(dropdown => {
+            if (dropdown.id !== `dropdown-${index}`) {
+                dropdown.classList.remove('show');
+            }
+        });
+        
+        // Toggle le dropdown actuel
+        const dropdown = document.getElementById(`dropdown-${index}`);
+        dropdown.classList.toggle('show');
+    }
+
+    // Actions
+    function sendSMS(index) {
+        const dateKey = getDateKey();
+        const device = devices[dateKey][index];
+        
+        const templates = {
+            received: `Bonjour ${device.client}, nous avons bien reçu votre ${device.model} chez HeroMobile. Diagnostic en cours, nous vous recontactons rapidement.`,
+            diagnostic: `Bonjour ${device.client}, diagnostic effectué pour votre ${device.model}. Coût estimé: ${device.price || 'À définir'}€. Confirmez-vous la réparation?`,
+            waiting: `Bonjour ${device.client}, votre ${device.model} est en attente de pièces. Livraison prévue sous 2-3 jours. Merci de votre patience.`,
+            repaired: `Excellente nouvelle! Votre ${device.model} est réparé chez HeroMobile. Montant: ${device.price || 'À définir'}€. Venez le récupérer!`,
+            delivered: `Merci ${device.client} pour votre confiance. Votre ${device.model} bénéficie d'une garantie de ${device.warranty || 3} mois. À bientôt chez HeroMobile!`
+        };
+        
+        const message = templates[device.status] || templates.received;
+        const smsUrl = `sms:${device.phone}?body=${encodeURIComponent(message)}`;
+        window.open(smsUrl, '_blank');
+        showNotification('📱 SMS ouvert dans votre application');
+    }
+
+    function generateInvoice(index) {
+        const dateKey = getDateKey();
+        const device = devices[dateKey][index];
+        
+        const invoice = `
+```
+
+# HEROMOBILE - FACTURE
+
+Date: ${new Date().toLocaleDateString(‘fr-FR’)}
+Heure: ${new Date().toLocaleTimeString(‘fr-FR’)}
+
+## CLIENT:
+
+Nom: ${device.client}
+Téléphone: ${device.phone || ‘Non renseigné’}
+
+## APPAREIL:
+
+Modèle: ${device.model}
+Problème: ${device.problem}
+Statut: ${statusLabels[device.status]}
+
+## DÉTAILS RÉPARATION:
+
+Pièces utilisées: ${device.parts || ‘Aucune’}
+Temps passé: ${device.duration || ‘Non défini’} heures
+Garantie: ${device.warranty || ‘3’} mois
+
+## MONTANT:
+
+Total TTC: ${device.price || ‘0’}€
+
+Merci de votre confiance !
+HeroMobile - Votre spécialiste réparation mobile
+`;
+
+```
+        const blob = new Blob([invoice], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `HeroMobile_Facture_${device.client.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        showNotification('📄 Facture téléchargée !');
+        toggleDropdown(index);
+    }
+
+    // Dupliquer un appareil
+    function duplicateDevice(index) {
+        const dateKey = getDateKey();
+        const device = devices[dateKey][index];
+        const newDevice = {
+            ...device,
+            client: device.client + ' (copie)',
+            time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+            status: 'received',
+            createdAt: new Date().toISOString()
+        };
+        
+        devices[dateKey].push(newDevice);
+        updateDisplay();
+        showNotification('Appareil dupliqué', 'success');
+        toggleDropdown(index);
+    }
+
+    // Supprimer un appareil
+    function deleteDevice(index) {
+        if (confirm('Supprimer cet appareil ?')) {
+            const dateKey = getDateKey();
+            devices[dateKey].splice(index, 1);
+            updateDisplay();
+            showNotification('Appareil supprimé', 'success');
+        }
+        toggleDropdown(index);
+    }
+
+    // Historique des appareils
+    function showDeviceHistory(index) {
+        const dateKey = getDateKey();
+        const device = devices[dateKey][index];
+        
+        // Chercher l'historique du client
+        const clientDevices = [];
+        Object.keys(devices).forEach(date => {
+            devices[date].forEach(d => {
+                if (d.client.toLowerCase() === device.client.toLowerCase()) {
+                    clientDevices.push({...d, date});
+                }
+            });
+        });
+        
+        clientDevices.sort((a, b) => new Date(b.date) - new Date(a.date));
+        
+        let historyText = `HISTORIQUE ${device.client.toUpperCase()}\n\n`;
+        clientDevices.forEach(d => {
+            historyText += `📱 ${d.model} - ${statusLabels[d.status]}\n`;
+            historyText += `📅 ${new Date(d.date).toLocaleDateString('fr-FR')} à ${d.time}\n`;
+            historyText += `🔧 ${d.problem}\n`;
+            historyText += `💰 ${d.price || 'Gratuit'}€\n\n`;
+        });
+        
+        console.log(historyText);
+        showNotification(`📊 Historique de ${device.client} affiché en console`, 'success');
+        toggleDropdown(index);
+    }
+
+    function exportDay() {
+        const dateKey = getDateKey();
+        const dayDevices = devices[dateKey] || [];
+        
+        if (dayDevices.length === 0) {
+            showNotification('⚠️ Aucun appareil à exporter aujourd\'hui');
+            return;
+        }
+        
+        const dateStr = currentDate.toLocaleDateString('fr-FR');
+        let exportText = `HEROMOBILE - RAPPORT JOURNALIER\n`;
+        exportText += `=====================================================\n`;
+        exportText += `Date: ${dateStr}\n`;
+        exportText += `Total appareils: ${dayDevices.length}\n\n`;
+        
+        dayDevices.forEach((device, i) => {
+            exportText += `${i + 1}. ${device.model}\n`;
+            exportText += `   Client: ${device.client}${device.phone ? ' (' + device.phone + ')' : ''}\n`;
+            exportText += `   Problème: ${device.problem}\n`;
+            exportText += `   Statut: ${statusLabels[device.status]}\n`;
+            exportText += `   Urgence: ${urgencyLabels[device.urgency] || 'Normal'}\n`;
+            exportText += `   Prix: ${device.price || 'À définir'}€\n`;
+            exportText += `   Pièces: ${device.parts || 'Aucune'}\n`;
+            exportText += `   Heure: ${device.time}\n\n`;
+        });
+        
+        const stats = getStatsForDay(dayDevices);
+        exportText += `STATISTIQUES:\n`;
+        exportText += `- Total: ${stats.total}\n`;
+        exportText += `- Réparés: ${stats.repaired}\n`;
+        exportText += `- En cours: ${stats.pending}\n`;
+        exportText += `- Revenus: ${stats.revenue}€\n`;
+        
+        const blob = new Blob([exportText], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `HeroMobile_Rapport_${dateKey}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        showNotification('📋 Rapport exporté !');
+    }
+
+    function showWeekStats() {
+        let totalWeek = 0;
+        let revenueWeek = 0;
+        let repairedWeek = 0;
+        
+        for (let i = 0; i < 7; i++) {
+            const date = new Date(currentDate);
+            date.setDate(currentDate.getDate() - i);
+            const dateKey = date.toISOString().split('T')[0];
+            const dayDevices = devices[dateKey] || [];
+            
+            totalWeek += dayDevices.length;
+            repairedWeek += dayDevices.filter(d => d.status === 'repaired' || d.status === 'delivered').length;
+            revenueWeek += dayDevices
+                .filter(d => (d.status === 'repaired' || d.status === 'delivered') && d.price)
+                .reduce((sum, d) => sum + parseFloat(d.price || 0), 0);
+        }
+        
+        const statsMsg = `📊 STATISTIQUES SEMAINE\n\nTotal appareils: ${totalWeek}\nRéparés: ${repairedWeek}\nChiffre d'affaires: ${Math.round(revenueWeek)}€\nMoyenne/jour: ${(totalWeek/7).toFixed(1)} appareils`;
+        
+        console.log(statsMsg);
+        showNotification('📊 Stats semaine affichées en console', 'success');
+    }
+
+    // Historique des clients
+    function showClientHistory() {
+        const allClients = {};
+        
+        Object.keys(devices).forEach(date => {
+            devices[date].forEach(device => {
+                const clientKey = device.client.toLowerCase();
+                if (!allClients[clientKey]) {
+                    allClients[clientKey] = {
+                        name: device.client,
+                        phone: device.phone,
+                        devices: [],
+                        totalSpent: 0,
+                        lastVisit: date
+                    };
+                }
+                
+                allClients[clientKey].devices.push({...device, date});
+                if (device.price && (device.status === 'repaired' || device.status === 'delivered')) {
+                    allClients[clientKey].totalSpent += parseFloat(device.price);
+                }
+                
+                if (date > allClients[clientKey].lastVisit) {
+                    allClients[clientKey].lastVisit = date;
+                }
+            });
+        });
+        
+        const sortedClients = Object.values(allClients)
+            .sort((a, b) => b.totalSpent - a.totalSpent)
+            .slice(0, 10);
+        
+        let report = 'TOP 10 CLIENTS HEROMOBILE\n\n';
+        sortedClients.forEach((client, i) => {
+            report += `${i + 1}. ${client.name}\n`;
+            report += `   📱 ${client.phone || 'Pas de téléphone'}\n`;
+            report += `   💰 ${client.totalSpent.toFixed(0)}€ dépensés\n`;
+            report += `   📱 ${client.devices.length} appareil(s)\n`;
+            report += `   📅 Dernière visite: ${new Date(client.lastVisit).toLocaleDateString('fr-FR')}\n\n`;
+        });
+        
+        console.log(report);
+        showNotification('📊 Historique clients affiché en console', 'success');
+    }
+
+    function getStatsForDay(dayDevices) {
+        const total = dayDevices.length;
+        const repaired = dayDevices.filter(d => d.status === 'repaired' || d.status === 'delivered').length;
+        const pending = total - repaired;
+        const revenue = dayDevices
+            .filter(d => (d.status === 'repaired' || d.status === 'delivered') && d.price)
+            .reduce((sum, d) => sum + parseFloat(d.price || 0), 0);
+        
+        return { total, repaired, pending, revenue: Math.round(revenue) };
+    }
+
+    // Navigation
+    function switchTab(tab) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        event.target.classList.add('active');
+        
+        const messages = {
+            planning: '📅 Onglet Planning actif',
+            clients: '👥 Gestion clients (à venir)',
+            stats: '📊 Statistiques avancées (à venir)',
+            stock: '📦 Gestion stock (à venir)'
+        };
+        
+        showNotification(messages[tab] || 'Onglet sélectionné');
+    }
+
+    // Auto-sauvegarde
+    function autoSave() {
+        try {
+            const dataToSave = {
+                devices: devices,
+                lastSaved: new Date().toISOString()
+            };
+            console.log('Auto-sauvegarde:', Object.keys(devices).length, 'jours de données');
+        } catch (e) {
+            console.warn('Erreur auto-sauvegarde:', e);
+        }
+    }
+
+    // Sauvegarder toutes les 5 minutes
+    setInterval(autoSave, 5 * 60 * 1000);
+
+    // Notifications améliorées
+    function showNotification(message, type = 'info') {
+        const existing = document.querySelector('.notification');
+        if (existing) {
+            existing.remove();
+        }
+        
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.textContent = message;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.remove();
+        }, 4000);
+    }
+
+    // Raccourcis clavier
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeModal();
+            if (isSelecting) toggleBulkSelect();
+            document.querySelectorAll('.dropdown-content').forEach(d => d.classList.remove('show'));
+        }
+        
+        if (e.ctrlKey || e.metaKey) {
+            switch(e.key) {
+                case 'n':
+                    e.preventDefault();
+                    openDeviceModal();
+                    break;
+                case 's':
+                    e.preventDefault();
+                    exportDay();
+                    break;
+                case 'a':
+                    if (isSelecting) {
+                        e.preventDefault();
+                        const dateKey = getDateKey();
+                        const dayDevices = devices[dateKey] || [];
+                        dayDevices.forEach((_, index) => selectedDevices.add(index));
+                        updateSelectedCount();
+                        updateDeviceList();
+                    }
+                    break;
+            }
+        }
+    });
+
+    // Fermer les dropdowns en cliquant ailleurs
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.quick-actions-dropdown')) {
+            document.querySelectorAll('.dropdown-content').forEach(dropdown => {
+                dropdown.classList.remove('show');
+            });
+        }
+    });
+
+    // Données d'exemple enrichies
+    function loadSampleData() {
+        const today = getDateKey();
+        const yesterday = new Date(currentDate);
+        yesterday.setDate(currentDate.getDate() - 1);
+        const yesterdayKey = yesterday.toISOString().split('T')[0];
+        
+        // Today's data avec nouvelles fonctionnalités
+        devices[today] = [
+            {
+                client: 'Sarah Benali',
+                phone: '06 12 34 56 78',
+                model: 'iPhone 15 Pro Max',
+                problem: 'Écran fissuré après chute, tactile partiellement défaillant',
+                price: '320',
+                status: 'diagnostic',
+                urgency: 'urgent',
+                priority: 'high',
+                parts: 'Écran OLED, Protection verre',
+                duration: '2.5',
+                warranty: '6',
+                time: '09:15',
+                createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+                timeSpent: '2.0'
+            },
+            {
+                client: 'Mohamed Chourak',
+                phone: '07 89 01 23 45',
+                model: 'Samsung Galaxy S24 Ultra',
+                problem: 'Batterie se décharge très rapidement, surchauffe anormale',
+                price: '95',
+                status: 'waiting',
+                urgency: 'normal',
+                priority: 'normal',
+                parts: 'Batterie Samsung originale',
+                duration: '1',
+                warranty: '12',
+                time: '10:30',
+                createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
+                timeSpent: '1.0'
+            },
+            {
+                client: 'Fatima Zahra',
+                phone: '06 55 44 33 22',
+                model: 'iPhone 13 Mini',
+                problem: 'Problème de charge, connecteur Lightning défaillant',
+                price: '75',
+                status: 'repaired',
+                urgency: 'normal',
+                priority: 'normal',
+                parts: 'Connecteur Lightning',
+                duration: '1.5',
+                warranty: '3',
+                time: '14:20',
+                createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString()
+            },
+            {
+                client: 'Karim El Fassi',
+                phone: '06 98 76 54 32',
+                model: 'Xiaomi Redmi Note 12',
+                problem: 'Caméra arrière floue, objectif rayé suite à chute',
+                price: '45',
+                status: 'received',
+                urgency: 'express',
+                priority: 'critical',
+                parts: 'Module caméra principal',
+                duration: '0.5',
+                warranty: '3',
+                time: '16:45',
+                createdAt: new Date(Date.now() - 30 * 60 * 1000).toISOString()
+            },
+            {
+                client: 'Aisha Benjelloun',
+                phone: '07 11 22 33 44',
+                model: 'iPhone 14',
+                problem: 'Écran noir, ne s\'allume plus après choc violent',
+                price: '180',
+                status: 'delivered',
+                urgency: 'normal',
+                priority: 'normal',
+                parts: 'Écran LCD, batterie',
+                duration: '3',
+                warranty: '6',
+                time: '11:00',
+                createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString()
+            }
+        ];
+        
+        // Yesterday's sample data pour l'historique
+        devices[yesterdayKey] = [
+            {
+                client: 'Omar Alami',
+                phone: '06 77 88 99 00',
+                model: 'iPhone 12',
+                problem: 'Batterie gonflée, remplacement nécessaire',
+                price: '80',
+                status: 'delivered',
+                urgency: 'urgent',
+                priority: 'high',
+                parts: 'Batterie',
+                duration: '1',
+                warranty: '6',
+                time: '10:00',
+                createdAt: yesterday.toISOString()
+            },
+            {
+                client: 'Sarah Benali',
+                phone: '06 12 34 56 78',
+                model: 'iPhone 15 Pro Max',
+                problem: 'Installation protection écran',
+                price: '25',
+                status: 'delivered',
+                urgency: 'normal',
+                priority: 'normal',
+                parts: 'Protection verre trempé',
+                duration: '0.25',
+                warranty: '1',
+                time: '15:30',
+                createdAt: yesterday.toISOString()
+            }
+        ];
+    }
+</script>
+```
+
+</body>
+</html>
