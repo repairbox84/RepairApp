@@ -4,14 +4,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HeroMobile - Gestion Atelier</title>
+    <title>RepairBox - Gestion Atelier</title>
 
 ```
 <!-- PWA Meta Tags -->
 <meta name="theme-color" content="#7c3aed">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="HeroMobile">
+<meta name="apple-mobile-web-app-title" content="RepairBox">
 
 <style>
     :root {
@@ -96,6 +96,32 @@
         gap: 10px;
     }
 
+    .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+
+    .save-indicator {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        padding: 5px 10px;
+        border-radius: 10px;
+        background: var(--bg-glass-dark);
+    }
+
+    .save-indicator.saving {
+        color: var(--accent-warning);
+    }
+
+    .save-indicator.saved {
+        color: var(--accent-success);
+    }
+
     .date-nav {
         display: flex;
         align-items: center;
@@ -135,6 +161,11 @@
     .btn-primary:hover {
         box-shadow: 0 6px 20px rgba(124, 58, 237, 0.4);
         background: linear-gradient(45deg, var(--accent-secondary), var(--accent-primary));
+    }
+
+    .btn-small {
+        padding: 6px 12px;
+        font-size: 0.8rem;
     }
 
     /* Navigation tabs */
@@ -224,7 +255,7 @@
         box-shadow: 0 6px 20px rgba(124, 58, 237, 0.4);
     }
 
-    /* Search and filters */
+    /* Controls avec sélection multiple */
     .controls {
         display: flex;
         gap: 12px;
@@ -710,6 +741,25 @@
         margin-top: 15px;
     }
 
+    /* Backup management */
+    .backup-section {
+        margin-top: 15px;
+        padding-top: 15px;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .backup-actions {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 10px;
+    }
+
+    .backup-info {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        text-align: center;
+    }
+
     /* Reminders */
     .reminders-list {
         margin-top: 15px;
@@ -995,27 +1045,75 @@
         .card-actions {
             justify-content: center;
         }
+
+        .header-actions {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 10px;
+        }
+
+        .date-nav {
+            justify-content: center;
+        }
+    }
+
+    /* Loading overlay */
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+    }
+
+    .loading-spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid rgba(124, 58, 237, 0.3);
+        border-top: 4px solid var(--accent-primary);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
     }
 </style>
 ```
 
 </head>
 <body>
-    <div class="container">
-        <!-- Header -->
-        <header class="header glass">
-            <h1>
-                <span>⚡</span>
-                <span>HeroMobile</span>
-            </h1>
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+```
+<div class="container">
+    <!-- Header -->
+    <header class="header glass">
+        <h1>
+            <span>⚡</span>
+            <span>RepairBox</span>
+        </h1>
+        <div class="header-actions">
+            <div class="save-indicator" id="saveIndicator">
+                <span id="saveIcon">💾</span>
+                <span id="saveText">Prêt</span>
+            </div>
             <div class="date-nav">
                 <button class="btn" onclick="changeDay(-1)">‹ Hier</button>
                 <span id="currentDate">Aujourd'hui</span>
                 <button class="btn" onclick="changeDay(1)">Demain ›</button>
             </div>
-        </header>
+        </div>
+    </header>
 
-```
     <!-- Navigation -->
     <nav class="nav-tabs glass">
         <div class="tab active" onclick="switchTab('planning')">📅 Planning</div>
@@ -1119,6 +1217,20 @@
                     <button class="btn" onclick="showWeekStats()">📊 Stats Semaine</button>
                     <button class="btn" onclick="showClientHistory()">👥 Historique Clients</button>
                 </div>
+
+                <!-- Gestion des sauvegardes -->
+                <div class="backup-section">
+                    <h4 style="font-size: 1rem; margin-bottom: 10px;">🔄 Sauvegarde</h4>
+                    <div class="backup-actions">
+                        <button class="btn btn-small" onclick="exportBackup()">📤 Exporter</button>
+                        <button class="btn btn-small" onclick="importBackup()">📥 Importer</button>
+                        <button class="btn btn-small" onclick="clearAllData()">🗑️ Vider</button>
+                    </div>
+                    <div class="backup-info" id="backupInfo">
+                        Dernière sauvegarde: Jamais
+                    </div>
+                    <input type="file" id="backupFileInput" accept=".json" style="display: none;" onchange="handleBackupImport(event)">
+                </div>
             </div>
 
             <!-- Rappels -->
@@ -1144,7 +1256,8 @@
             <div class="form-grid">
                 <div class="form-group">
                     <label class="form-label">Client *</label>
-                    <input type="text" class="form-input" id="clientName" required placeholder="Nom du client">
+                    <input type="text" class="form-input" id="clientName" required placeholder="Nom du client" list="clientsList">
+                    <datalist id="clientsList"></datalist>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Téléphone</label>
@@ -1154,7 +1267,8 @@
 
             <div class="form-group full-width">
                 <label class="form-label">Appareil *</label>
-                <input type="text" class="form-input" id="deviceModel" required placeholder="iPhone 15, Samsung Galaxy S24...">
+                <input type="text" class="form-input" id="deviceModel" required placeholder="iPhone 15, Samsung Galaxy S24..." list="devicesList">
+                <datalist id="devicesList"></datalist>
             </div>
 
             <div class="form-group full-width">
@@ -1215,7 +1329,8 @@
 
             <div class="form-group full-width">
                 <label class="form-label">Pièces nécessaires</label>
-                <input type="text" class="form-input" id="deviceParts" placeholder="Écran, batterie, caméra...">
+                <input type="text" class="form-input" id="deviceParts" placeholder="Écran, batterie, caméra..." list="partsList">
+                <datalist id="partsList"></datalist>
             </div>
 
             <div class="form-group full-width">
@@ -1248,6 +1363,10 @@
     let currentFilter = 'all';
     let isSelecting = false;
     let selectedDevices = new Set();
+    let autoSaveInterval;
+    let clientSuggestions = new Set();
+    let deviceSuggestions = new Set();
+    let partsSuggestions = new Set();
 
     // Status mappings
     const statusLabels = {
@@ -1272,10 +1391,49 @@
 
     // Initialize app
     document.addEventListener('DOMContentLoaded', function() {
-        loadSampleData();
+        showLoading(true);
+        loadFromStorage();
+        loadSampleDataIfEmpty();
         updateDisplay();
         startTimeTracking();
+        startAutoSave();
+        updateSuggestions();
+        showLoading(false);
     });
+
+    // Loading overlay
+    function showLoading(show) {
+        document.getElementById('loadingOverlay').style.display = show ? 'flex' : 'none';
+    }
+
+    // Save indicator
+    function updateSaveIndicator(status) {
+        const indicator = document.getElementById('saveIndicator');
+        const icon = document.getElementById('saveIcon');
+        const text = document.getElementById('saveText');
+        
+        indicator.className = `save-indicator ${status}`;
+        
+        switch(status) {
+            case 'saving':
+                icon.textContent = '⏳';
+                text.textContent = 'Sauvegarde...';
+                break;
+            case 'saved':
+                icon.textContent = '✅';
+                text.textContent = 'Sauvegardé';
+                setTimeout(() => updateSaveIndicator('ready'), 2000);
+                break;
+            case 'error':
+                icon.textContent = '❌';
+                text.textContent = 'Erreur';
+                setTimeout(() => updateSaveIndicator('ready'), 3000);
+                break;
+            default:
+                icon.textContent = '💾';
+                text.textContent = 'Prêt';
+        }
+    }
 
     // Time tracking
     function startTimeTracking() {
@@ -1296,6 +1454,213 @@
         });
         
         updateDisplay();
+    }
+
+    // Auto-save functionality
+    function startAutoSave() {
+        autoSaveInterval = setInterval(() => {
+            saveToStorage();
+        }, 30000); // Save every 30 seconds
+    }
+
+    // Local Storage Management
+    function saveToStorage() {
+        try {
+            updateSaveIndicator('saving');
+            const dataToSave = {
+                devices: devices,
+                clientSuggestions: Array.from(clientSuggestions),
+                deviceSuggestions: Array.from(deviceSuggestions),
+                partsSuggestions: Array.from(partsSuggestions),
+                lastSaved: new Date().toISOString(),
+                version: '2.0'
+            };
+            
+            const jsonData = JSON.stringify(dataToSave);
+            localStorage.setItem('repairbox_data', jsonData);
+            
+            updateSaveIndicator('saved');
+            updateBackupInfo();
+            
+            console.log('Données sauvegardées:', Object.keys(devices).length, 'jours');
+        } catch (e) {
+            console.error('Erreur sauvegarde:', e);
+            updateSaveIndicator('error');
+            showNotification('Erreur de sauvegarde: ' + e.message, 'error');
+        }
+    }
+
+    function loadFromStorage() {
+        try {
+            const savedData = localStorage.getItem('repairbox_data');
+            if (savedData) {
+                const data = JSON.parse(savedData);
+                
+                devices = data.devices || {};
+                clientSuggestions = new Set(data.clientSuggestions || []);
+                deviceSuggestions = new Set(data.deviceSuggestions || []);
+                partsSuggestions = new Set(data.partsSuggestions || []);
+                
+                console.log('Données chargées:', Object.keys(devices).length, 'jours');
+                updateBackupInfo();
+                return true;
+            }
+        } catch (e) {
+            console.error('Erreur chargement:', e);
+            showNotification('Erreur de chargement des données', 'error');
+        }
+        return false;
+    }
+
+    function updateBackupInfo() {
+        const backupInfo = document.getElementById('backupInfo');
+        const savedData = localStorage.getItem('repairbox_data');
+        
+        if (savedData) {
+            try {
+                const data = JSON.parse(savedData);
+                const lastSaved = new Date(data.lastSaved);
+                backupInfo.textContent = `Dernière sauvegarde: ${lastSaved.toLocaleDateString('fr-FR')} à ${lastSaved.toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'})}`;
+            } catch (e) {
+                backupInfo.textContent = 'Erreur lecture sauvegarde';
+            }
+        } else {
+            backupInfo.textContent = 'Aucune sauvegarde';
+        }
+    }
+
+    // Backup Management
+    function exportBackup() {
+        try {
+            const dataToExport = {
+                devices: devices,
+                clientSuggestions: Array.from(clientSuggestions),
+                deviceSuggestions: Array.from(deviceSuggestions),
+                partsSuggestions: Array.from(partsSuggestions),
+                exportDate: new Date().toISOString(),
+                version: '2.0'
+            };
+            
+            const jsonData = JSON.stringify(dataToExport, null, 2);
+            const blob = new Blob([jsonData], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `RepairBox_Backup_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showNotification('💾 Sauvegarde exportée avec succès!', 'success');
+        } catch (e) {
+            console.error('Erreur export:', e);
+            showNotification('Erreur lors de l\'export: ' + e.message, 'error');
+        }
+    }
+
+    function importBackup() {
+        document.getElementById('backupFileInput').click();
+    }
+
+    function handleBackupImport(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const importedData = JSON.parse(e.target.result);
+                
+                // Validate structure
+                if (!importedData.devices) {
+                    throw new Error('Fichier de sauvegarde invalide');
+                }
+                
+                // Confirm import
+                const deviceCount = Object.keys(importedData.devices).reduce((count, date) => 
+                    count + (importedData.devices[date] || []).length, 0);
+                
+                if (confirm(`Importer ${deviceCount} appareils? Cela remplacera toutes les données actuelles.`)) {
+                    devices = importedData.devices || {};
+                    clientSuggestions = new Set(importedData.clientSuggestions || []);
+                    deviceSuggestions = new Set(importedData.deviceSuggestions || []);
+                    partsSuggestions = new Set(importedData.partsSuggestions || []);
+                    
+                    saveToStorage();
+                    updateDisplay();
+                    updateSuggestions();
+                    
+                    showNotification(`📥 ${deviceCount} appareils importés avec succès!`, 'success');
+                }
+            } catch (e) {
+                console.error('Erreur import:', e);
+                showNotification('Erreur lors de l\'import: ' + e.message, 'error');
+            }
+        };
+        
+        reader.readAsText(file);
+        event.target.value = ''; // Clear the input
+    }
+
+    function clearAllData() {
+        if (confirm('⚠️ ATTENTION: Supprimer TOUTES les données de façon permanente?\n\nCette action est irréversible!')) {
+            if (confirm('Êtes-vous vraiment sûr? Toutes les données seront perdues!')) {
+                devices = {};
+                clientSuggestions = new Set();
+                deviceSuggestions = new Set();
+                partsSuggestions = new Set();
+                
+                localStorage.removeItem('repairbox_data');
+                
+                updateDisplay();
+                updateSuggestions();
+                updateBackupInfo();
+                
+                showNotification('🗑️ Toutes les données ont été supprimées', 'warning');
+            }
+        }
+    }
+
+    // Suggestions Management
+    function updateSuggestions() {
+        updateDatalist('clientsList', clientSuggestions);
+        updateDatalist('devicesList', deviceSuggestions);
+        updateDatalist('partsList', partsSuggestions);
+    }
+
+    function updateDatalist(id, suggestions) {
+        const datalist = document.getElementById(id);
+        datalist.innerHTML = '';
+        suggestions.forEach(suggestion => {
+            const option = document.createElement('option');
+            option.value = suggestion;
+            datalist.appendChild(option);
+        });
+    }
+
+    function addToSuggestions(type, value) {
+        if (!value || value.trim().length < 2) return;
+        
+        const cleanValue = value.trim();
+        
+        switch(type) {
+            case 'client':
+                clientSuggestions.add(cleanValue);
+                break;
+            case 'device':
+                deviceSuggestions.add(cleanValue);
+                break;
+            case 'parts':
+                cleanValue.split(',').forEach(part => {
+                    const trimmedPart = part.trim();
+                    if (trimmedPart.length > 1) {
+                        partsSuggestions.add(trimmedPart);
+                    }
+                });
+                break;
+        }
     }
 
     // Date management
@@ -1461,6 +1826,11 @@
             createdAt: new Date().toISOString()
         };
 
+        // Add to suggestions
+        addToSuggestions('client', deviceData.client);
+        addToSuggestions('device', deviceData.model);
+        addToSuggestions('parts', deviceData.parts);
+
         const dateKey = getDateKey();
         if (!devices[dateKey]) {
             devices[dateKey] = [];
@@ -1479,8 +1849,9 @@
         }
 
         updateDisplay();
+        updateSuggestions();
         closeModal();
-        autoSave();
+        saveToStorage();
     }
 
     // Photo handling
@@ -1659,6 +2030,7 @@
             showNotification(`${selectedDevices.size} appareils mis à jour`, 'success');
             toggleBulkSelect();
             updateDisplay();
+            saveToStorage();
         }
     }
 
@@ -1705,6 +2077,7 @@
             showNotification(`${selectedDevices.size} appareils supprimés`, 'success');
             toggleBulkSelect();
             updateDisplay();
+            saveToStorage();
         }
     }
 
@@ -1728,11 +2101,11 @@
         const device = devices[dateKey][index];
         
         const templates = {
-            received: `Bonjour ${device.client}, nous avons bien reçu votre ${device.model} chez HeroMobile. Diagnostic en cours, nous vous recontactons rapidement.`,
+            received: `Bonjour ${device.client}, nous avons bien reçu votre ${device.model} chez RepairBox. Diagnostic en cours, nous vous recontactons rapidement.`,
             diagnostic: `Bonjour ${device.client}, diagnostic effectué pour votre ${device.model}. Coût estimé: ${device.price || 'À définir'}€. Confirmez-vous la réparation?`,
             waiting: `Bonjour ${device.client}, votre ${device.model} est en attente de pièces. Livraison prévue sous 2-3 jours. Merci de votre patience.`,
-            repaired: `Excellente nouvelle! Votre ${device.model} est réparé chez HeroMobile. Montant: ${device.price || 'À définir'}€. Venez le récupérer!`,
-            delivered: `Merci ${device.client} pour votre confiance. Votre ${device.model} bénéficie d'une garantie de ${device.warranty || 3} mois. À bientôt chez HeroMobile!`
+            repaired: `Excellente nouvelle! Votre ${device.model} est réparé chez RepairBox. Montant: ${device.price || 'À définir'}€. Venez le récupérer!`,
+            delivered: `Merci ${device.client} pour votre confiance. Votre ${device.model} bénéficie d'une garantie de ${device.warranty || 3} mois. À bientôt chez RepairBox!`
         };
         
         const message = templates[device.status] || templates.received;
@@ -1748,7 +2121,7 @@
         const invoice = `
 ```
 
-# HEROMOBILE - FACTURE
+# REPAIRBOX - FACTURE
 
 Date: ${new Date().toLocaleDateString(‘fr-FR’)}
 Heure: ${new Date().toLocaleTimeString(‘fr-FR’)}
@@ -1775,7 +2148,7 @@ Garantie: ${device.warranty || ‘3’} mois
 Total TTC: ${device.price || ‘0’}€
 
 Merci de votre confiance !
-HeroMobile - Votre spécialiste réparation mobile
+RepairBox - Votre spécialiste réparation mobile
 `;
 
 ```
@@ -1783,7 +2156,7 @@ HeroMobile - Votre spécialiste réparation mobile
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `HeroMobile_Facture_${device.client.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.txt`;
+        a.download = `RepairBox_Facture_${device.client.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.txt`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -1807,6 +2180,7 @@ HeroMobile - Votre spécialiste réparation mobile
         
         devices[dateKey].push(newDevice);
         updateDisplay();
+        saveToStorage();
         showNotification('Appareil dupliqué', 'success');
         toggleDropdown(index);
     }
@@ -1817,6 +2191,7 @@ HeroMobile - Votre spécialiste réparation mobile
             const dateKey = getDateKey();
             devices[dateKey].splice(index, 1);
             updateDisplay();
+            saveToStorage();
             showNotification('Appareil supprimé', 'success');
         }
         toggleDropdown(index);
@@ -1862,7 +2237,7 @@ HeroMobile - Votre spécialiste réparation mobile
         }
         
         const dateStr = currentDate.toLocaleDateString('fr-FR');
-        let exportText = `HEROMOBILE - RAPPORT JOURNALIER\n`;
+        let exportText = `REPAIRBOX - RAPPORT JOURNALIER\n`;
         exportText += `=====================================================\n`;
         exportText += `Date: ${dateStr}\n`;
         exportText += `Total appareils: ${dayDevices.length}\n\n`;
@@ -1889,7 +2264,7 @@ HeroMobile - Votre spécialiste réparation mobile
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `HeroMobile_Rapport_${dateKey}.txt`;
+        a.download = `RepairBox_Rapport_${dateKey}.txt`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -1954,7 +2329,7 @@ HeroMobile - Votre spécialiste réparation mobile
             .sort((a, b) => b.totalSpent - a.totalSpent)
             .slice(0, 10);
         
-        let report = 'TOP 10 CLIENTS HEROMOBILE\n\n';
+        let report = 'TOP 10 CLIENTS REPAIRBOX\n\n';
         sortedClients.forEach((client, i) => {
             report += `${i + 1}. ${client.name}\n`;
             report += `   📱 ${client.phone || 'Pas de téléphone'}\n`;
@@ -1992,22 +2367,6 @@ HeroMobile - Votre spécialiste réparation mobile
         
         showNotification(messages[tab] || 'Onglet sélectionné');
     }
-
-    // Auto-sauvegarde
-    function autoSave() {
-        try {
-            const dataToSave = {
-                devices: devices,
-                lastSaved: new Date().toISOString()
-            };
-            console.log('Auto-sauvegarde:', Object.keys(devices).length, 'jours de données');
-        } catch (e) {
-            console.warn('Erreur auto-sauvegarde:', e);
-        }
-    }
-
-    // Sauvegarder toutes les 5 minutes
-    setInterval(autoSave, 5 * 60 * 1000);
 
     // Notifications améliorées
     function showNotification(message, type = 'info') {
@@ -2068,6 +2427,13 @@ HeroMobile - Votre spécialiste réparation mobile
     });
 
     // Données d'exemple enrichies
+    function loadSampleDataIfEmpty() {
+        // Charger seulement si aucune donnée n'existe
+        if (Object.keys(devices).length === 0) {
+            loadSampleData();
+        }
+    }
+
     function loadSampleData() {
         const today = getDateKey();
         const yesterday = new Date(currentDate);
@@ -2188,9 +2554,50 @@ HeroMobile - Votre spécialiste réparation mobile
                 createdAt: yesterday.toISOString()
             }
         ];
+
+        // Ajouter aux suggestions
+        devices[today].concat(devices[yesterdayKey]).forEach(device => {
+            addToSuggestions('client', device.client);
+            addToSuggestions('device', device.model);
+            addToSuggestions('parts', device.parts);
+        });
+
+        saveToStorage();
     }
-</script>
+
+    // Gestion des erreurs globales
+    window.addEventListener('error', function(e) {
+        console.error('Erreur application:', e.error);
+        showNotification('Une erreur s\'est produite. Vérifiez la console.', 'error');
+    });
+
+    // Avant fermeture de la page
+    window.addEventListener('beforeunload', function(e) {
+        saveToStorage();
+    });
+
+    // Performance monitoring
+    function logPerformance() {
+        const deviceCount = Object.keys(devices).reduce((count, date) => 
+            count + (devices[date] || []).length, 0);
+        
+        console.log(`📊 Performance RepairBox:
 ```
+
+- Total appareils: ${deviceCount}
+- Jours de données: ${Object.keys(devices).length}
+- Taille stockage: ${JSON.stringify(devices).length} caractères
+- Suggestions clients: ${clientSuggestions.size}
+- Suggestions appareils: ${deviceSuggestions.size}
+- Suggestions pièces: ${partsSuggestions.size}`);
+  }
+  
+  ```
+    // Log performance au démarrage
+    setTimeout(logPerformance, 2000);
+  ```
+  
+    </script>
 
 </body>
 </html>
