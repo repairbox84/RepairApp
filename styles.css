@@ -399,10 +399,11 @@ body {
     border-radius: 15px;
     transition: all 0.3s ease;
     position: relative;
-    overflow: hidden;
     border: 2px solid var(--border-color);
     color: var(--text-on-card);
     box-shadow: 0 4px 12px var(--shadow-color);
+    /* CORRECTION: Permettre au dropdown de dépasser */
+    overflow: visible;
 }
 
 .device-card:hover {
