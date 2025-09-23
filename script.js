@@ -239,8 +239,13 @@ function calculateAnalytics() {
 }
 
 function updateAnalytics() {
-    const analytics = calculateAnalytics();
     const analyticsGrid = document.getElementById('analyticsGrid');
+    if (!analyticsGrid) {
+        console.log('Analytics grid not found, skipping analytics update');
+        return;
+    }
+    
+    const analytics = calculateAnalytics();
     
     // Get top problems
     const topProblems = Object.entries(analytics.problemStats)
