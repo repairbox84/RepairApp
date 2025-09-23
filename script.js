@@ -1,4 +1,4 @@
-// Application State
+// Application State (extended)
 let currentDate = new Date();
 let devices = {};
 let currentEditingIndex = null;
@@ -9,6 +9,7 @@ let autoSaveInterval;
 let clientSuggestions = new Set();
 let deviceSuggestions = new Set();
 let partsSuggestions = new Set();
+let analytics = {};
 
 // Status mappings
 const statusLabels = {
@@ -30,6 +31,359 @@ const priorityLabels = {
     'high': '🟠 Haute', 
     'critical': '🔴 Critique'
 };
+
+// QR Code Management
+function generateDeviceQR(device, index) {
+    const qrData = {
+        id: `RB-${getDateKey()}-${index}`,
+        client: device.client,
+        model: device.model,
+        date: device.date,
+        status: device.status
+    };
+    return JSON.stringify(qrData);
+}
+
+function showQRCode(index) {
+    const dateKey = getDateKey();
+    const device = devices[dateKey][index];
+    const qrData = generateDeviceQR(device, index);
+    
+    document.getElementById('qrModalTitle').textContent = `QR Code - ${device.model}`;
+    
+    // Generate QR Code
+    const qrCodeDiv = document.getElementById('qrCodeDisplay');
+    qrCodeDiv.innerHTML = '';
+    
+    if (typeof QRCode !== 'undefined') {
+        QRCode.toCanvas(qrCodeDiv, qrData, {
+            width: 200,
+            margin: 2,
+            color: {
+                dark: '#000000',
+                light: '#FFFFFF'
+            }
+        }, function (error) {
+            if (error) {
+                qrCodeDiv.innerHTML = '<div style="padding: 20px; color: var(--accent-error);">Erreur génération QR Code</div>';
+            }
+        });
+    } else {
+        qrCodeDiv.innerHTML = '<div style="padding: 20px;">QR Code: ' + qrData + '</div>';
+    }
+    
+    document.getElementById('qrModal').classList.add('active');
+}
+
+function closeQRModal() {
+    document.getElementById('qrModal').classList.remove('active');
+}
+
+function generateQRLabel(index) {
+    showQRCode(index);
+}
+
+function downloadQRCode() {
+    const canvas = document.querySelector('#qrCodeDisplay canvas');
+    if (canvas) {
+        const link = document.createElement('a');
+        link.download = 'qr-code-repairbox.png';
+        link.href = canvas.toDataURL();
+        link.click();
+    }
+}
+
+function printQRLabel() {
+    const canvas = document.querySelector('#qrCodeDisplay canvas');
+    if (canvas) {
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+            <html>
+                <head><title>Étiquette QR - RepairBox</title></head>
+                <body style="margin: 0; text-align: center;">
+                    <img src="${canvas.toDataURL()}" style="max-width: 100%;">
+                </body>
+            </html>
+        `);
+        printWindow.document.close();
+        printWindow.print();
+    }
+}
+
+// QR Code Scanner (basic implementation)
+function startQRScan() {
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+            .then(stream => {
+                // Note: Full QR scanning would require more complex video processing
+                showNotification('Scanner QR: Fonctionnalité en développement', 'warning');
+            })
+            .catch(err => {
+                showNotification('Erreur accès caméra: ' + err.message, 'error');
+            });
+    } else {
+        showNotification('Scanner QR non supporté sur ce navigateur', 'error');
+    }
+}
+
+// Photo Management and Reminders
+function needsPhotoReminder(device) {
+    // Show photo button if status is received and no photos, or repaired and no after photo
+    return (device.status === 'received' && !device.photoBefore) || 
+           (device.status === 'repaired' && !device.photoAfter);
+}
+
+function addDevicePhoto(index) {
+    const dateKey = getDateKey();
+    const device = devices[dateKey][index];
+    
+    // Determine which photo is needed
+    const photoType = device.status === 'received' ? 'before' : 'after';
+    
+    // Trigger photo upload
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.capture = 'camera'; // Prefer camera on mobile
+    
+    input.onchange = function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                device[`photo${photoType.charAt(0).toUpperCase() + photoType.slice(1)}`] = e.target.result;
+                saveToStorage();
+                updateDisplay();
+                showNotification(`Photo ${photoType === 'before' ? 'avant' : 'après'} ajoutée`, 'success');
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+    
+    input.click();
+}
+
+function checkPhotoReminders() {
+    const dateKey = getDateKey();
+    const dayDevices = devices[dateKey] || [];
+    let needsPhoto = false;
+    
+    dayDevices.forEach(device => {
+        if (needsPhotoReminder(device)) {
+            needsPhoto = true;
+        }
+    });
+    
+    const reminder = document.getElementById('photoReminder');
+    if (needsPhoto) {
+        reminder.classList.remove('hidden');
+        reminder.onclick = () => {
+            // Find first device needing photo
+            const index = dayDevices.findIndex(device => needsPhotoReminder(device));
+            if (index !== -1) {
+                addDevicePhoto(index);
+            }
+        };
+    } else {
+        reminder.classList.add('hidden');
+    }
+}
+
+// Enhanced Analytics
+function calculateAnalytics() {
+    const allDevices = [];
+    Object.keys(devices).forEach(date => {
+        devices[date].forEach(device => {
+            allDevices.push({...device, date});
+        });
+    });
+    
+    // Group by problem type
+    const problemStats = {};
+    const modelStats = {};
+    
+    allDevices.forEach(device => {
+        // Problem analysis
+        const problemKey = device.problem.toLowerCase();
+        if (!problemStats[problemKey]) {
+            problemStats[problemKey] = {
+                count: 0,
+                totalTime: 0,
+                totalRevenue: 0,
+                avgTime: 0,
+                avgRevenue: 0
+            };
+        }
+        
+        problemStats[problemKey].count++;
+        if (device.duration) problemStats[problemKey].totalTime += parseFloat(device.duration);
+        if (device.price) problemStats[problemKey].totalRevenue += parseFloat(device.price);
+        
+        // Model analysis
+        const modelKey = device.model.toLowerCase();
+        if (!modelStats[modelKey]) {
+            modelStats[modelKey] = { count: 0, revenue: 0 };
+        }
+        modelStats[modelKey].count++;
+        if (device.price) modelStats[modelKey].revenue += parseFloat(device.price);
+    });
+    
+    // Calculate averages
+    Object.keys(problemStats).forEach(key => {
+        const stat = problemStats[key];
+        stat.avgTime = stat.count > 0 ? (stat.totalTime / stat.count).toFixed(1) : 0;
+        stat.avgRevenue = stat.count > 0 ? (stat.totalRevenue / stat.count).toFixed(0) : 0;
+    });
+    
+    return { problemStats, modelStats, totalDevices: allDevices.length };
+}
+
+function updateAnalytics() {
+    const analytics = calculateAnalytics();
+    const analyticsGrid = document.getElementById('analyticsGrid');
+    
+    // Get top problems
+    const topProblems = Object.entries(analytics.problemStats)
+        .sort(([,a], [,b]) => b.count - a.count)
+        .slice(0, 4);
+    
+    let analyticsHTML = '';
+    
+    if (topProblems.length > 0) {
+        topProblems.forEach(([problem, stats]) => {
+            analyticsHTML += `
+                <div class="analytics-item">
+                    <div class="analytics-number">${stats.avgTime}h</div>
+                    <div class="analytics-label">Temps moyen<br>${problem.substring(0, 15)}...</div>
+                </div>
+            `;
+        });
+    } else {
+        analyticsHTML = `
+            <div class="analytics-item" style="grid-column: 1 / -1;">
+                <div class="analytics-number">📊</div>
+                <div class="analytics-label">Pas encore assez de données</div>
+            </div>
+        `;
+    }
+    
+    analyticsGrid.innerHTML = analyticsHTML;
+}
+
+// Thermal Printer Support
+function printThermalTicket(index) {
+    const dateKey = getDateKey();
+    const device = devices[dateKey][index];
+    
+    const ticketHTML = `
+        <div class="thermal-ticket">
+            <div class="thermal-header">
+                REPAIRBOX
+                <br>Ticket de Réparation
+            </div>
+            
+            <div class="thermal-section">
+                <div class="thermal-line">
+                    <span>N° Ticket:</span>
+                    <span>RB-${getDateKey()}-${index + 1}</span>
+                </div>
+                <div class="thermal-line">
+                    <span>Date:</span>
+                    <span>${new Date().toLocaleDateString('fr-FR')}</span>
+                </div>
+                <div class="thermal-line">
+                    <span>Heure:</span>
+                    <span>${device.time}</span>
+                </div>
+            </div>
+            
+            <div class="thermal-separator"></div>
+            
+            <div class="thermal-section">
+                <strong>CLIENT:</strong><br>
+                ${device.client}<br>
+                ${device.phone || 'Tel: Non renseigné'}
+            </div>
+            
+            <div class="thermal-separator"></div>
+            
+            <div class="thermal-section">
+                <strong>APPAREIL:</strong><br>
+                ${device.model}<br><br>
+                <strong>PROBLÈME:</strong><br>
+                ${device.problem}
+            </div>
+            
+            <div class="thermal-separator"></div>
+            
+            <div class="thermal-section">
+                <div class="thermal-line">
+                    <span>Statut:</span>
+                    <span>${statusLabels[device.status]}</span>
+                </div>
+                <div class="thermal-line">
+                    <span>Urgence:</span>
+                    <span>${urgencyLabels[device.urgency] || 'Normal'}</span>
+                </div>
+                <div class="thermal-line">
+                    <span>Prix estimé:</span>
+                    <span>${device.price ? device.price + '€' : 'À définir'}</span>
+                </div>
+                ${device.warranty ? `
+                <div class="thermal-line">
+                    <span>Garantie:</span>
+                    <span>${device.warranty} mois</span>
+                </div>` : ''}
+            </div>
+            
+            <div class="thermal-separator"></div>
+            
+            <div class="thermal-qr">
+                [QR CODE PLACEHOLDER]
+                <br>ID: RB-${getDateKey()}-${index + 1}
+            </div>
+            
+            <div class="thermal-footer">
+                Merci de votre confiance<br>
+                RepairBox - Votre spécialiste mobile<br>
+                Conservez ce ticket
+            </div>
+        </div>
+    `;
+    
+    // Create print window
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <html>
+            <head>
+                <title>Ticket RepairBox</title>
+                <style>
+                    @media print {
+                        * { margin: 0; padding: 0; box-sizing: border-box; }
+                        body { font-family: 'Courier New', monospace; font-size: 12px; line-height: 1.2; color: black; background: white; }
+                        .thermal-ticket { width: 80mm; margin: 0; padding: 5mm; }
+                        .thermal-header { text-align: center; font-weight: bold; font-size: 14px; margin-bottom: 10px; border-bottom: 1px dashed black; padding-bottom: 5px; }
+                        .thermal-section { margin: 8px 0; }
+                        .thermal-line { display: flex; justify-content: space-between; margin: 2px 0; }
+                        .thermal-separator { border-top: 1px dashed black; margin: 8px 0; }
+                        .thermal-qr { text-align: center; margin: 10px 0; }
+                        .thermal-footer { text-align: center; font-size: 10px; margin-top: 10px; border-top: 1px dashed black; padding-top: 5px; }
+                    }
+                </style>
+            </head>
+            <body>${ticketHTML}</body>
+        </html>
+    `);
+    printWindow.document.close();
+    
+    // Auto-print after a short delay
+    setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+    }, 500);
+    
+    showNotification('Ticket envoyé à l\'imprimante thermique', 'success');
+}
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', function() {
@@ -320,6 +674,8 @@ function updateDisplay() {
     updateDeviceList();
     updateStats();
     updateReminders();
+    updateAnalytics();
+    checkPhotoReminders();
 }
 
 function updateDateDisplay() {
@@ -396,12 +752,16 @@ function createDeviceCard(device, index) {
             ${!isSelecting ? `
                 <div class="card-actions">
                     ${device.phone ? `<button class="action-btn btn-sms" onclick="sendSMS(${index})">📱 SMS</button>` : ''}
+                    <button class="action-btn btn-print" onclick="printThermalTicket(${index})">🖨️ Ticket</button>
+                    <button class="action-btn btn-qr" onclick="showQRCode(${index})">📱 QR</button>
+                    ${needsPhotoReminder(device) ? `<button class="action-btn btn-photo" onclick="addDevicePhoto(${index})">📸 Photo</button>` : ''}
                     <div class="quick-actions-dropdown">
                         <button class="action-btn btn-invoice" onclick="toggleDropdown(${index})">⚙️ Actions</button>
                         <div class="dropdown-content" id="dropdown-${index}">
                             <button class="dropdown-item" onclick="generateInvoice(${index})">📄 Facture</button>
                             <button class="dropdown-item" onclick="duplicateDevice(${index})">📋 Dupliquer</button>
                             <button class="dropdown-item" onclick="showDeviceHistory(${index})">📊 Historique</button>
+                            <button class="dropdown-item" onclick="generateQRLabel(${index})">🏷️ Étiquette QR</button>
                             <button class="dropdown-item" onclick="deleteDevice(${index})" style="color: var(--accent-error)">🗑️ Supprimer</button>
                         </div>
                     </div>

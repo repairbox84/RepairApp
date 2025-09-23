@@ -168,6 +168,41 @@
         </div>
     </div>
 
+    <!-- QR Code Modal -->
+    <div class="modal" id="qrModal">
+        <div class="modal-content glass qr-modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="qrModalTitle">📱 Code QR Appareil</h3>
+                <button class="close-btn" onclick="closeQRModal()">&times;</button>
+            </div>
+            
+            <div class="qr-code-display" id="qrCodeDisplay">
+                <!-- QR Code will be generated here -->
+            </div>
+            
+            <div class="qr-actions">
+                <button class="btn" onclick="printQRLabel()">🖨️ Imprimer Étiquette</button>
+                <button class="btn btn-primary" onclick="downloadQRCode()">📥 Télécharger</button>
+            </div>
+            
+            <div style="margin-top: 20px; padding: 15px; background: var(--bg-glass-dark); border-radius: 10px;">
+                <h4>Scanner un QR Code</h4>
+                <input type="file" id="qrFileInput" accept="image/*" style="margin: 10px 0;">
+                <button class="btn" onclick="startQRScan()">📷 Scanner depuis Caméra</button>
+                <div id="qrScanResult" style="margin-top: 10px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Photo Reminder Notification -->
+    <div class="photo-reminder hidden" id="photoReminder">
+        <div>📸 Photo requise</div>
+        <small>Cliquez pour ajouter</small>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.3/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
+
     <!-- Device Modal -->
     <div class="modal" id="deviceModal">
         <div class="modal-content glass">

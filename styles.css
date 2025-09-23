@@ -586,6 +586,157 @@ body {
     background: linear-gradient(45deg, var(--accent-primary), var(--accent-secondary));
 }
 
+.btn-print {
+    background: linear-gradient(45deg, #06b6d4, #0891b2);
+}
+
+.btn-qr {
+    background: linear-gradient(45deg, #8b5cf6, #7c3aed);
+}
+
+.btn-photo {
+    background: linear-gradient(45deg, #f59e0b, #d97706);
+}
+
+/* QR Code Modal */
+.qr-modal {
+    text-align: center;
+}
+
+.qr-code-display {
+    margin: 20px 0;
+    padding: 20px;
+    background: white;
+    border-radius: 10px;
+    display: inline-block;
+}
+
+.qr-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+/* Photo reminder */
+.photo-reminder {
+    position: fixed;
+    top: 50%;
+    right: 20px;
+    transform: translateY(-50%);
+    background: var(--accent-warning);
+    color: white;
+    padding: 15px 20px;
+    border-radius: 10px;
+    z-index: 10001;
+    animation: pulse 2s infinite;
+    cursor: pointer;
+}
+
+.photo-reminder.hidden {
+    display: none;
+}
+
+/* Analytics section */
+.analytics-card {
+    margin-top: 20px;
+    padding: 20px;
+    background: var(--bg-card);
+    border-radius: 15px;
+    border: 2px solid var(--border-color);
+}
+
+.analytics-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.analytics-item {
+    padding: 15px;
+    background: var(--bg-glass-dark);
+    border-radius: 10px;
+    text-align: center;
+}
+
+.analytics-number {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--accent-primary);
+}
+
+.analytics-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 5px;
+}
+
+/* Thermal printer styles */
+@media print {
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+    
+    body {
+        font-family: 'Courier New', monospace;
+        font-size: 12px;
+        line-height: 1.2;
+        color: black;
+        background: white;
+    }
+    
+    .thermal-ticket {
+        width: 80mm;
+        margin: 0;
+        padding: 5mm;
+    }
+    
+    .thermal-header {
+        text-align: center;
+        font-weight: bold;
+        font-size: 14px;
+        margin-bottom: 10px;
+        border-bottom: 1px dashed black;
+        padding-bottom: 5px;
+    }
+    
+    .thermal-section {
+        margin: 8px 0;
+    }
+    
+    .thermal-line {
+        display: flex;
+        justify-content: space-between;
+        margin: 2px 0;
+    }
+    
+    .thermal-separator {
+        border-top: 1px dashed black;
+        margin: 8px 0;
+    }
+    
+    .thermal-qr {
+        text-align: center;
+        margin: 10px 0;
+    }
+    
+    .thermal-footer {
+        text-align: center;
+        font-size: 10px;
+        margin-top: 10px;
+        border-top: 1px dashed black;
+        padding-top: 5px;
+    }
+    
+    /* Hide everything except thermal ticket */
+    body > *:not(.thermal-ticket) {
+        display: none !important;
+    }
+}
+
 /* Quick actions dropdown */
 .quick-actions-dropdown {
     position: relative;
