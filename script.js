@@ -126,13 +126,7 @@ function startQRScan() {
     }
 }
 
-// Photo Management and Reminders
-function needsPhotoReminder(device) {
-    // Show photo button if status is received and no photos, or repaired and no after photo
-    return (device.status === 'received' && !device.photoBefore) || 
-           (device.status === 'repaired' && !device.photoAfter);
-}
-
+// Photo Management
 function addDevicePhoto(index) {
     const dateKey = getDateKey();
     const device = devices[dateKey][index];
@@ -161,32 +155,6 @@ function addDevicePhoto(index) {
     };
     
     input.click();
-}
-
-function checkPhotoReminders() {
-    const dateKey = getDateKey();
-    const dayDevices = devices[dateKey] || [];
-    let needsPhoto = false;
-    
-    dayDevices.forEach(device => {
-        if (needsPhotoReminder(device)) {
-            needsPhoto = true;
-        }
-    });
-    
-    const reminder = document.getElementById('photoReminder');
-    if (needsPhoto) {
-        reminder.classList.remove('hidden');
-        reminder.onclick = () => {
-            // Find first device needing photo
-            const index = dayDevices.findIndex(device => needsPhotoReminder(device));
-            if (index !== -1) {
-                addDevicePhoto(index);
-            }
-        };
-    } else {
-        reminder.classList.add('hidden');
-    }
 }
 
 // Enhanced Analytics
@@ -680,7 +648,6 @@ function updateDisplay() {
     updateStats();
     updateReminders();
     updateAnalytics();
-    checkPhotoReminders();
 }
 
 function updateDateDisplay() {
@@ -759,7 +726,6 @@ function createDeviceCard(device, index) {
                     ${device.phone ? `<button class="action-btn btn-sms" onclick="sendSMS(${index})">📱 SMS</button>` : ''}
                     <button class="action-btn btn-print" onclick="printThermalTicket(${index})">🖨️ Ticket</button>
                     <button class="action-btn btn-qr" onclick="showQRCode(${index})">📱 QR</button>
-                    ${needsPhotoReminder(device) ? `<button class="action-btn btn-photo" onclick="addDevicePhoto(${index})">📸 Photo</button>` : ''}
                     <div class="quick-actions-dropdown">
                         <button class="action-btn btn-invoice" onclick="toggleDropdown(${index})">⚙️ Actions</button>
                         <div class="dropdown-content" id="dropdown-${index}">
